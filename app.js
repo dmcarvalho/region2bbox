@@ -7,10 +7,10 @@ app.use(compression());
 const { Pool, Client } = require('pg')
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'sisfam',
-  password: 'postgres',
+  user: process.env.userName,
+  host: process.env.host,
+  database: process.env.database,
+  password: process.env.passwd,
   port: 5432,
 })
 

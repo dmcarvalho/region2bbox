@@ -1,0 +1,8 @@
+apps:
+  - script   : app.js
+    instances: 1
+    exec_mode: cluster
+    name: region2bbox
+    watch  : true
+    env    :
+      NODE_ENV: prod
