@@ -1,0 +1,29 @@
+{
+  "name": "region2bbox",
+  "version": "1.0.0",
+  "description": "O serviço ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Diego Moreira Carvalho",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmcarvalho/region2bbox.git"
+  },
+  "keywords": [
+    "geoprocessing",
+    "bbox",
+    "geojson"
+  ],
+  "bugs": {
+    "url": "https://github.com/dmcarvalho/region2bbox/issues"
+  },
+  "homepage": "https://github.com/dmcarvalho/region2bbox#readme",
+  "dependencies": {
+    "compression": "^1.7.0",
+    "express": "^4.15.4",
+    "pg": "^7.2.0"
+  }
+}
