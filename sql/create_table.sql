@@ -20,11 +20,11 @@ CREATE TABLE public.tb_region2bbox
   geocod character varying(50) NOT NULL,
   name character varying(50) NOT NULL,
   geom geometry(Geometry,4674) NOT NULL,
-  bbox geometry(Polygon,4674) NOT NULL,
-  center geometry(Point,4674) NOT NULL,
-  bbox_geojson text NOT NULL,
-  geom_geojson text,
-  center_geojson text,
+  bbox geometry(Polygon,4674),
+  center geometry(Point,4674),
+  bbox_geojson json,
+  geom_geojson json,
+  center_geojson json,
   CONSTRAINT pk_tb_region2bbox PRIMARY KEY (resource_name, geocod)
 )
 WITH (
