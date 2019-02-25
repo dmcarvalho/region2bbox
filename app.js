@@ -1,16 +1,43 @@
 var express = require('express');
 var compression = require('compression');
+var mcache = require('memory-cache');
 
 var app = express();
-app.use(compression());
+
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
+app.use(compression())
+
+let duration = 24 * 60 * 60;
+var cache = (duration) => {
+    return (req, res, next) => {
+        let key = '__express__' + req.originalUrl || req.url
+        let cachedBody = mcache.get(key)
+        if (cachedBody) {
+            res.send(cachedBody)
+            return
+        } else {
+            res.sendResponse = res.send
+            res.send = (body) => {
+                mcache.put(key, body, duration * 1000);
+                res.sendResponse(body)
+            }
+            next()
+        }
+    }
+}
 
 const { Pool, Client } = require('pg')
 
 const pool = new Pool({
-  user: process.env.userName,
-  host: process.env.host,
-  database: process.env.database,
-  password: process.env.passwd,
+  user: "postgres", //process.env.userName,
+  host: "localhost", //process.env.host,
+  database: "o_banco", //process.env.database,
+  password: "postgres", //process.env.passwd,
   port: 5432,
 })
 
@@ -22,12 +49,21 @@ function parser_rows(rows){
 		row = rows[i];
 		feature = {"type": "Feature"};
 		if (params["geom"] != 'none'){
-			feature["geometry"] = row[params["geom"]];
+			feature["geometry"] = row["geom"];
 		}
 		feature["properties"] = {"geocod":row["geocod"], "name":row["name"]};
 
 		features[count] = feature;
 		count += 1;
+	}
+	return features
+}
+
+function parser_rows_json(rows){
+	var features = {};
+	for (var i in rows){
+		row = rows[i];
+		features[parseInt(row["geocod"])] = {"name":row["name"]};
 	}
 	return features
 }
@@ -59,9 +95,9 @@ function make_query(params){
 }
 
 function get_geom_type(req){
-	var geom_types = {'bbox': 'bbox_geojson',
-			'geom':'geom_geojson',
-			'center': 'center_geojson',
+	var geom_types = {'bbox': 'bbox_geojson::json as geom',
+			'geom':'geom_geojson::json as geom',
+			'center': 'center_geojson::json as geom',
 			'none':'none'}
 	
 	if (req.query.hasOwnProperty('geom_type')){
@@ -78,7 +114,7 @@ function get_geom_type(req){
 	}
 }
 
-app.get('/', function (req, res) {
+app.get('/', cache(duration), function (req, res) {
 	params = {"properties":["resource_name", "description"],
 			"append": `GROUP BY resource_name, description`};
 	var resource_sql = make_query(params);
@@ -88,7 +124,7 @@ app.get('/', function (req, res) {
 	
 });
 
-app.get('/bbox/:resource/', function (req, res) {
+app.get('/bbox/:resource/', cache(duration), function (req, res) {
 	if (req.query.hasOwnProperty('id')){
 		var id_list = "'" + req.query['id'].replace(/,/g, "','") +"'";
 
@@ -104,7 +140,7 @@ app.get('/bbox/:resource/', function (req, res) {
 	}
 });
 
-app.get('/:resource/', function (req, res) {
+app.get('/:resource/', cache(duration), function (req, res) {
 	params = {"properties":["geocod", "name"],
 				"geom": get_geom_type(req),
 				"query": `resource_name =  '${req.params.resource}'`};
@@ -113,7 +149,7 @@ app.get('/:resource/', function (req, res) {
 	
 });
 
-app.get('/:resource/:id/', function (req, res) {
+app.get('/:resource/:id/', cache(duration), function (req, res) {
 	params = {"properties":["geocod", "name"],
 			"geom":get_geom_type(req),
 			"query": `resource_name =  '${req.params.resource}' AND geocod = '${req.params.id}'`};
@@ -122,6 +158,6 @@ app.get('/:resource/:id/', function (req, res) {
 	
 });
 
-app.listen(3000, function () {
-	console.log('Example app listening on port 3000!');
+app.listen(3001, function () {
+	console.log('Region2BBOX listening on port 3001!');
 });
